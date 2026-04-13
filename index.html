@@ -1,0 +1,274 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Virtual Battery Pack Builder</title>
+    <style>
+        :root {
+            --bg-color: #f4f7f6;
+            --card-bg: #ffffff;
+            --primary-color: #2c3e50;
+            --accent-color: #3498db;
+            --border-color: #e0e6ed;
+            --text-color: #333333;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.1);
+            width: 100%;
+            max-width: 800px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 30px;
+            padding: 30px;
+        }
+
+        @media (max-width: 768px) {
+            .container {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        h2 {
+            grid-column: 1 / -1;
+            color: var(--primary-color);
+            margin-top: 0;
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        .section-title {
+            font-size: 1.1em;
+            font-weight: 600;
+            margin-bottom: 15px;
+            color: var(--primary-color);
+        }
+
+        .input-group {
+            margin-bottom: 15px;
+        }
+
+        .input-group label {
+            display: block;
+            font-size: 0.9em;
+            margin-bottom: 5px;
+            font-weight: 500;
+        }
+
+        .input-group input {
+            width: 100%;
+            padding: 10px;
+            border: 1px solid var(--border-color);
+            border-radius: 6px;
+            font-size: 1em;
+            box-sizing: border-box;
+            transition: border-color 0.3s;
+        }
+
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--accent-color);
+        }
+
+        .results-panel {
+            background-color: #f8fafc;
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 20px;
+        }
+
+        .result-item {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            padding-bottom: 8px;
+            border-bottom: 1px solid var(--border-color);
+        }
+
+        .result-item:last-child {
+            border-bottom: none;
+            margin-bottom: 0;
+            padding-bottom: 0;
+        }
+
+        .result-label {
+            font-weight: 500;
+        }
+
+        .result-value {
+            font-weight: 700;
+            color: var(--accent-color);
+        }
+
+        .pack-architecture {
+            background-color: var(--primary-color);
+            color: white;
+            text-align: center;
+            padding: 15px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+        }
+
+        .pack-architecture h3 {
+            margin: 0;
+            font-size: 1.2em;
+            font-weight: 400;
+        }
+
+        .pack-architecture .arch-value {
+            font-size: 2em;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>Virtual Battery Pack Builder</h2>
+
+    <div class="inputs-panel">
+        <div class="section-title">Target Requirements</div>
+        <div class="input-group">
+            <label for="targetVoltage">Target Pack Voltage (V)</label>
+            <input type="number" id="targetVoltage" value="51" step="0.1">
+        </div>
+        <div class="input-group">
+            <label for="targetCapacity">Target Pack Capacity (Ah)</label>
+            <input type="number" id="targetCapacity" value="25" step="0.1">
+        </div>
+
+        <div class="section-title" style="margin-top: 25px;">Cell Specifications</div>
+        <div class="input-group">
+            <label for="cellNominalVoltage">Cell Nominal Voltage (V)</label>
+            <input type="number" id="cellNominalVoltage" value="3.64" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="cellCapacity">Cell Capacity (Ah)</label>
+            <input type="number" id="cellCapacity" value="5" step="0.1">
+        </div>
+        <div class="input-group">
+            <label for="cellMaxVoltage">Cell Max Voltage (V)</label>
+            <input type="number" id="cellMaxVoltage" value="4.2" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="cellMinVoltage">Cell Min Voltage (V)</label>
+            <input type="number" id="cellMinVoltage" value="3.0" step="0.01">
+        </div>
+        <div class="input-group">
+            <label for="cellMaxCurrent">Cell Max Discharge Current (A)</label>
+            <input type="number" id="cellMaxCurrent" value="10" step="0.1">
+        </div>
+    </div>
+
+    <div class="results-panel">
+        <div class="pack-architecture">
+            <h3>Calculated Architecture</h3>
+            <div class="arch-value" id="archOutput">14S5P</div>
+        </div>
+
+        <div class="section-title">System Configuration</div>
+        <div class="result-item">
+            <span class="result-label">Series Cells (S)</span>
+            <span class="result-value" id="seriesOutput">14</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Parallel Cells (P)</span>
+            <span class="result-value" id="parallelOutput">5</span>
+        </div>
+
+        <div class="section-title" style="margin-top: 25px;">BMS Protection Limits</div>
+        <div class="result-item">
+            <span class="result-label">Over-Voltage Protection (OVP)</span>
+            <span class="result-value"><span id="ovpOutput">58.8</span> V</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Under-Voltage Protection (UVP)</span>
+            <span class="result-value"><span id="uvpOutput">42.0</span> V</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Over-Current Protection (OCP)</span>
+            <span class="result-value"><span id="ocpOutput">50.0</span> A</span>
+        </div>
+    </div>
+</div>
+
+<script>
+    // Get input elements
+    const inputs = document.querySelectorAll('input');
+    
+    const targetVoltageIn = document.getElementById('targetVoltage');
+    const targetCapacityIn = document.getElementById('targetCapacity');
+    const cellNominalVoltageIn = document.getElementById('cellNominalVoltage');
+    const cellCapacityIn = document.getElementById('cellCapacity');
+    const cellMaxVoltageIn = document.getElementById('cellMaxVoltage');
+    const cellMinVoltageIn = document.getElementById('cellMinVoltage');
+    const cellMaxCurrentIn = document.getElementById('cellMaxCurrent');
+
+    // Get output elements
+    const archOutput = document.getElementById('archOutput');
+    const seriesOutput = document.getElementById('seriesOutput');
+    const parallelOutput = document.getElementById('parallelOutput');
+    const ovpOutput = document.getElementById('ovpOutput');
+    const uvpOutput = document.getElementById('uvpOutput');
+    const ocpOutput = document.getElementById('ocpOutput');
+
+    // Calculation logic
+    function calculatePack() {
+        // Parse inputs
+        const targetV = parseFloat(targetVoltageIn.value) || 0;
+        const targetC = parseFloat(targetCapacityIn.value) || 0;
+        const cellNomV = parseFloat(cellNominalVoltageIn.value) || 0;
+        const cellCap = parseFloat(cellCapacityIn.value) || 0;
+        const cellMaxV = parseFloat(cellMaxVoltageIn.value) || 0;
+        const cellMinV = parseFloat(cellMinVoltageIn.value) || 0;
+        const cellMaxI = parseFloat(cellMaxCurrentIn.value) || 0;
+
+        // Prevent division by zero
+        if (cellNomV <= 0 || cellCap <= 0) return;
+
+        // Calculate Series and Parallel
+        const series = Math.ceil(targetV / cellNomV);
+        const parallel = Math.ceil(targetC / cellCap);
+
+        // Calculate Protection Limits
+        const ovp = series * cellMaxV;
+        const uvp = series * cellMinV;
+        const ocp = parallel * cellMaxI;
+
+        // Update UI
+        seriesOutput.textContent = series;
+        parallelOutput.textContent = parallel;
+        archOutput.textContent = `${series}S${parallel}P`;
+        
+        ovpOutput.textContent = ovp.toFixed(1);
+        uvpOutput.textContent = uvp.toFixed(1);
+        ocpOutput.textContent = ocp.toFixed(1);
+    }
+
+    // Add event listeners to all inputs to trigger recalculation on change
+    inputs.forEach(input => {
+        input.addEventListener('input', calculatePack);
+    });
+
+    // Initial calculation on load
+    calculatePack();
+</script>
+
+</body>
+</html>
