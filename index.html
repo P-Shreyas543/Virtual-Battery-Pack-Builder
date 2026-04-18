@@ -3,13 +3,14 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Virtual Battery Pack Builder</title>
+    <title>Advanced Virtual Battery Pack Builder</title>
     <style>
         :root {
             --bg-color: #f4f7f6;
             --card-bg: #ffffff;
             --primary-color: #2c3e50;
             --accent-color: #3498db;
+            --prismatic-color: #7f8c8d;
             --border-color: #e0e6ed;
             --text-color: #333333;
         }
@@ -31,14 +32,14 @@
             border-radius: 12px;
             box-shadow: 0 8px 24px rgba(0,0,0,0.1);
             width: 100%;
-            max-width: 900px;
+            max-width: 1000px;
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 30px;
             padding: 30px;
         }
 
-        @media (max-width: 768px) {
+        @media (max-width: 850px) {
             .container {
                 grid-template-columns: 1fr;
             }
@@ -73,7 +74,7 @@
             font-weight: 500;
         }
 
-        .input-group input {
+        .input-group input, .input-group select {
             width: 100%;
             padding: 10px;
             border: 1px solid var(--border-color);
@@ -81,9 +82,10 @@
             font-size: 1em;
             box-sizing: border-box;
             transition: border-color 0.3s;
+            background-color: #fff;
         }
 
-        .input-group input:focus {
+        .input-group input:focus, .input-group select:focus {
             outline: none;
             border-color: var(--accent-color);
         }
@@ -152,47 +154,42 @@
             flex-direction: column;
             align-items: center;
             overflow: hidden;
-            min-height: 250px;
+            min-height: 400px;
         }
 
         .pack-grid-container {
-            perspective: 1000px;
-            margin-top: 30px;
-            margin-bottom: 40px;
+            perspective: 1500px;
+            margin-top: 60px;
+            margin-bottom: 60px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            width: 100%;
         }
 
         .pack-grid {
             display: grid;
-            gap: 4px;
-            padding: 10px;
-            background: rgba(44, 62, 80, 0.1);
+            padding: 15px;
+            background: rgba(44, 62, 80, 0.05);
             border-radius: 8px;
             /* Isometric Transformation */
             transform: rotateX(60deg) rotateZ(-45deg);
             transform-style: preserve-3d;
-            box-shadow: 15px 15px 20px rgba(0,0,0,0.15);
+            box-shadow: 15px 15px 30px rgba(0,0,0,0.1);
             transition: all 0.3s ease;
         }
 
         .cell-3d {
-            width: 16px;
-            height: 16px;
-            background-color: #3498db;
-            border-radius: 50%;
             position: relative;
-            /* Creates the 3D cylinder depth effect */
-            box-shadow: 
-                -1px 1px 0 #2980b9,
-                -2px 2px 0 #2980b9,
-                -3px 3px 0 #2980b9,
-                -4px 4px 0 #2980b9,
-                -5px 5px 0 #2980b9,
-                -6px 6px 0 #2980b9,
-                -7px 7px 5px rgba(0,0,0,0.4);
+            background-color: var(--accent-color);
+            transform-style: preserve-3d;
         }
 
-        /* Positive terminal styling */
-        .cell-3d::after {
+        /* Cylindrical specific styling */
+        .cell-cylindrical {
+            border-radius: 50%;
+        }
+        .cell-cylindrical::after {
             content: '';
             position: absolute;
             top: 25%; left: 25%; right: 25%; bottom: 25%;
@@ -200,65 +197,136 @@
             border-radius: 50%;
         }
 
+        /* Prismatic specific styling */
+        .cell-prismatic {
+            border-radius: 2px;
+            background-color: #bdc3c7;
+            border: 1px solid rgba(255,255,255,0.3);
+        }
+        
+        /* Prismatic Terminals */
+        .cell-prismatic::before, .cell-prismatic::after {
+            content: '';
+            position: absolute;
+            width: 20%;
+            height: 20%;
+            background: #7f8c8d;
+            border-radius: 50%;
+            top: 40%;
+        }
+        .cell-prismatic::before { left: 15%; }
+        .cell-prismatic::after { right: 15%; }
+
         .viz-error {
             color: #e74c3c;
             font-weight: bold;
             margin-top: 20px;
             text-align: center;
+            padding: 20px;
+            background: #fadbd8;
+            border-radius: 8px;
+        }
+        
+        .dim-group {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
         }
     </style>
 </head>
 <body>
 
 <div class="container">
-    <h2>Virtual Battery Pack Builder</h2>
+    <h2>Advanced Virtual Battery Pack Builder</h2>
 
     <div class="inputs-panel">
         <div class="section-title">Target Requirements</div>
-        <div class="input-group">
-            <label for="targetVoltage">Target Pack Voltage (V)</label>
-            <input type="number" id="targetVoltage" value="51" step="0.1">
-        </div>
-        <div class="input-group">
-            <label for="targetCapacity">Target Pack Capacity (Ah)</label>
-            <input type="number" id="targetCapacity" value="25" step="0.1">
+        <div class="dim-group">
+            <div class="input-group">
+                <label for="targetVoltage">Target Pack Voltage (V)</label>
+                <input type="number" id="targetVoltage" value="51" step="0.1">
+            </div>
+            <div class="input-group">
+                <label for="targetCapacity">Target Capacity (Ah)</label>
+                <input type="number" id="targetCapacity" value="25" step="0.1">
+            </div>
         </div>
 
-        <div class="section-title" style="margin-top: 25px;">Cell Specifications</div>
+        <div class="section-title" style="margin-top: 15px;">Cell Form Factor & Dimensions</div>
         <div class="input-group">
-            <label for="cellNominalVoltage">Cell Nominal Voltage (V)</label>
-            <input type="number" id="cellNominalVoltage" value="3.64" step="0.01">
+            <label for="cellType">Cell Type</label>
+            <select id="cellType">
+                <option value="cylindrical">Cylindrical (e.g., 18650, 21700, 4680)</option>
+                <option value="prismatic">Prismatic (e.g., LiFePO4 Blocks)</option>
+            </select>
         </div>
-        <div class="input-group">
-            <label for="cellCapacity">Cell Capacity (Ah)</label>
-            <input type="number" id="cellCapacity" value="5" step="0.1">
+
+        <div id="cylInputs" class="dim-group">
+            <div class="input-group">
+                <label for="cylDia">Diameter (mm)</label>
+                <input type="number" id="cylDia" value="18" step="1">
+            </div>
+            <div class="input-group">
+                <label for="cylHeight">Height (mm)</label>
+                <input type="number" id="cylHeight" value="65" step="1">
+            </div>
         </div>
-        <div class="input-group">
-            <label for="cellMaxVoltage">Cell Max Voltage (V)</label>
-            <input type="number" id="cellMaxVoltage" value="4.2" step="0.01">
+
+        <div id="prisInputs" class="dim-group" style="display: none;">
+            <div class="input-group">
+                <label for="prisLength">Length (mm)</label>
+                <input type="number" id="prisLength" value="130" step="1">
+            </div>
+            <div class="input-group">
+                <label for="prisThickness">Thickness/Width (mm)</label>
+                <input type="number" id="prisThickness" value="36" step="1">
+            </div>
+            <div class="input-group" style="grid-column: 1 / -1;">
+                <label for="prisHeight">Height (mm)</label>
+                <input type="number" id="prisHeight" value="200" step="1">
+            </div>
         </div>
-        <div class="input-group">
-            <label for="cellMinVoltage">Cell Min Voltage (V)</label>
-            <input type="number" id="cellMinVoltage" value="3.0" step="0.01">
+
+        <div class="section-title" style="margin-top: 15px;">Electrical Specifications</div>
+        <div class="dim-group">
+            <div class="input-group">
+                <label for="cellNominalVoltage">Nominal Voltage (V)</label>
+                <input type="number" id="cellNominalVoltage" value="3.6" step="0.01">
+            </div>
+            <div class="input-group">
+                <label for="cellCapacity">Cell Capacity (Ah)</label>
+                <input type="number" id="cellCapacity" value="2.5" step="0.1">
+            </div>
+            <div class="input-group">
+                <label for="cellMaxVoltage">Max Voltage (V)</label>
+                <input type="number" id="cellMaxVoltage" value="4.2" step="0.01">
+            </div>
+            <div class="input-group">
+                <label for="cellMinVoltage">Min Voltage (V)</label>
+                <input type="number" id="cellMinVoltage" value="3.0" step="0.01">
+            </div>
         </div>
-        <div class="input-group">
-            <label for="cellMaxCurrent">Cell Max Discharge (A)</label>
-            <input type="number" id="cellMaxCurrent" value="10" step="0.1">
-        </div>
-        <div class="input-group">
-            <label for="cellIR">Cell Internal Resistance (mΩ)</label>
-            <input type="number" id="cellIR" value="25" step="1">
-        </div>
-        <div class="input-group">
-            <label for="cellWeight">Cell Weight (g)</label>
-            <input type="number" id="cellWeight" value="48" step="1">
+        
+        <div class="dim-group">
+            <div class="input-group">
+                <label for="cellMaxCurrent">Max Discharge (A)</label>
+                <input type="number" id="cellMaxCurrent" value="10" step="0.1">
+            </div>
+            <div class="input-group">
+                <label for="cellIR">Internal Resist. (mΩ)</label>
+                <input type="number" id="cellIR" value="25" step="1">
+            </div>
+            <div class="input-group" style="grid-column: 1 / -1;">
+                <label for="cellWeight">Individual Cell Weight (g)</label>
+                <input type="number" id="cellWeight" value="45" step="1">
+            </div>
         </div>
     </div>
 
     <div class="results-panel">
         <div class="pack-architecture">
             <h3>Calculated Architecture</h3>
-            <div class="arch-value" id="archOutput">14S5P</div>
+            <div class="arch-value" id="archOutput">14S10P</div>
         </div>
 
         <div class="section-title">System Configuration & Specs</div>
@@ -268,7 +336,7 @@
         </div>
         <div class="result-item">
             <span class="result-label">Parallel Cells (P)</span>
-            <span class="result-value" id="parallelOutput">5</span>
+            <span class="result-value" id="parallelOutput">10</span>
         </div>
         <div class="result-item">
             <span class="result-label">Total Energy</span>
@@ -279,12 +347,16 @@
             <span class="result-value"><span id="irOutput">0.0</span> mΩ</span>
         </div>
         <div class="result-item">
-            <span class="result-label">Estimated Cell Weight</span>
+            <span class="result-label">Est. Bare Cells Weight</span>
             <span class="result-value"><span id="weightOutput">0.0</span> kg</span>
         </div>
         <div class="result-item">
             <span class="result-label">Max Continuous Power</span>
             <span class="result-value"><span id="powerOutput">0</span> W</span>
+        </div>
+        <div class="result-item">
+            <span class="result-label">Est. Physical Footprint (LxW)</span>
+            <span class="result-value"><span id="footprintOutput">0 x 0</span> mm</span>
         </div>
 
         <div class="section-title" style="margin-top: 25px;">BMS Protection Limits</div>
@@ -298,12 +370,15 @@
         </div>
         <div class="result-item">
             <span class="result-label">Over-Current (OCP)</span>
-            <span class="result-value"><span id="ocpOutput">50.0</span> A</span>
+            <span class="result-value"><span id="ocpOutput">100.0</span> A</span>
         </div>
     </div>
 
     <div class="visualizer-section">
-        <div class="section-title" style="width: 100%; text-align: center;">Dynamic 3D Pack Layout</div>
+        <div class="section-title" style="width: 100%; text-align: center; border-bottom: none;">
+            Dynamic 3D Pack Layout
+            <div style="font-size: 0.75em; color: #7f8c8d; font-weight: normal; margin-top: 5px;">Auto-scaled to fit viewport</div>
+        </div>
         <div class="pack-grid-container">
             <div class="pack-grid" id="batteryVisualizer">
                 </div>
@@ -313,9 +388,13 @@
 </div>
 
 <script>
-    // Get input elements
-    const inputs = document.querySelectorAll('input');
-    
+    // Cell Type Toggle
+    const cellTypeSelect = document.getElementById('cellType');
+    const cylInputs = document.getElementById('cylInputs');
+    const prisInputs = document.getElementById('prisInputs');
+
+    // Inputs
+    const inputs = document.querySelectorAll('input, select');
     const targetVoltageIn = document.getElementById('targetVoltage');
     const targetCapacityIn = document.getElementById('targetCapacity');
     const cellNominalVoltageIn = document.getElementById('cellNominalVoltage');
@@ -325,27 +404,55 @@
     const cellMaxCurrentIn = document.getElementById('cellMaxCurrent');
     const cellIRIn = document.getElementById('cellIR');
     const cellWeightIn = document.getElementById('cellWeight');
+    
+    // Dimension Inputs
+    const cylDiaIn = document.getElementById('cylDia');
+    const cylHeightIn = document.getElementById('cylHeight');
+    const prisLengthIn = document.getElementById('prisLength');
+    const prisThicknessIn = document.getElementById('prisThickness');
+    const prisHeightIn = document.getElementById('prisHeight');
 
-    // Get output elements
+    // Outputs
     const archOutput = document.getElementById('archOutput');
     const seriesOutput = document.getElementById('seriesOutput');
     const parallelOutput = document.getElementById('parallelOutput');
     const ovpOutput = document.getElementById('ovpOutput');
     const uvpOutput = document.getElementById('uvpOutput');
     const ocpOutput = document.getElementById('ocpOutput');
-    
-    // New Output Elements
     const kwhOutput = document.getElementById('kwhOutput');
     const irOutput = document.getElementById('irOutput');
     const weightOutput = document.getElementById('weightOutput');
     const powerOutput = document.getElementById('powerOutput');
+    const footprintOutput = document.getElementById('footprintOutput');
     
-    // Visualizer Elements
     const batteryVisualizer = document.getElementById('batteryVisualizer');
     const vizWarning = document.getElementById('vizWarning');
 
+    // Handle Form Factor Toggle
+    cellTypeSelect.addEventListener('change', (e) => {
+        if (e.target.value === 'cylindrical') {
+            cylInputs.style.display = 'grid';
+            prisInputs.style.display = 'none';
+            // Auto-fill common cylindrical presets
+            cellCapacityIn.value = 2.5;
+            cellNominalVoltageIn.value = 3.6;
+            cellWeightIn.value = 45;
+        } else {
+            cylInputs.style.display = 'none';
+            prisInputs.style.display = 'grid';
+            // Auto-fill common prismatic presets (e.g., 100Ah LiFePO4)
+            cellCapacityIn.value = 100;
+            cellNominalVoltageIn.value = 3.2;
+            cellMinVoltageIn.value = 2.5;
+            cellMaxVoltageIn.value = 3.65;
+            cellMaxCurrentIn.value = 100;
+            cellWeightIn.value = 2000;
+        }
+        calculatePack();
+    });
+
+    // Main calculation function
     function calculatePack() {
-        // Parse inputs
         const targetV = parseFloat(targetVoltageIn.value) || 0;
         const targetC = parseFloat(targetCapacityIn.value) || 0;
         const cellNomV = parseFloat(cellNominalVoltageIn.value) || 0;
@@ -355,82 +462,144 @@
         const cellMaxI = parseFloat(cellMaxCurrentIn.value) || 0;
         const cellIR = parseFloat(cellIRIn.value) || 0;
         const cellWeight = parseFloat(cellWeightIn.value) || 0;
+        const cellType = cellTypeSelect.value;
 
-        // Prevent division by zero
         if (cellNomV <= 0 || cellCap <= 0) return;
 
-        // Calculate Series and Parallel
+        // Series and Parallel Calc
         const series = Math.ceil(targetV / cellNomV);
         const parallel = Math.ceil(targetC / cellCap);
 
-        // Calculate Extended Specs
-        const actualPackVoltage = series * cellNomV;
-        const actualPackCapacity = parallel * cellCap;
-        const totalKwh = (actualPackVoltage * actualPackCapacity) / 1000;
-        
+        // Extended Specs
+        const actualV = series * cellNomV;
+        const actualC = parallel * cellCap;
+        const totalKwh = (actualV * actualC) / 1000;
         const packIR = (cellIR * series) / parallel;
         const totalWeightKg = (series * parallel * cellWeight) / 1000;
-        
         const ocp = parallel * cellMaxI;
-        const maxPowerW = actualPackVoltage * ocp;
-
-        // Calculate Protection Limits
+        const maxPowerW = actualV * ocp;
         const ovp = series * cellMaxV;
         const uvp = series * cellMinV;
 
-        // Update Text UI
+        // Dimensions handling for 3D Visualizer and Footprint
+        let cellBaseW, cellBaseH, cellDepth, cellGap;
+
+        if (cellType === 'cylindrical') {
+            const dia = parseFloat(cylDiaIn.value) || 18;
+            cellBaseW = dia;
+            cellBaseH = dia;
+            cellDepth = parseFloat(cylHeightIn.value) || 65;
+            cellGap = 2; // mm gap
+        } else {
+            cellBaseW = parseFloat(prisLengthIn.value) || 130;
+            cellBaseH = parseFloat(prisThicknessIn.value) || 36;
+            cellDepth = parseFloat(prisHeightIn.value) || 200;
+            cellGap = 1; // tight fit
+        }
+
+        const packPhysicalWidth = (parallel * cellBaseW) + ((parallel - 1) * cellGap);
+        const packPhysicalLength = (series * cellBaseH) + ((series - 1) * cellGap);
+
+        // Update UI
         seriesOutput.textContent = series;
         parallelOutput.textContent = parallel;
         archOutput.textContent = `${series}S${parallel}P`;
-        
         kwhOutput.textContent = totalKwh.toFixed(2);
         irOutput.textContent = packIR.toFixed(1);
         weightOutput.textContent = totalWeightKg.toFixed(2);
         powerOutput.textContent = Math.round(maxPowerW).toLocaleString();
-
+        footprintOutput.textContent = `${packPhysicalWidth.toFixed(0)} x ${packPhysicalLength.toFixed(0)}`;
         ovpOutput.textContent = ovp.toFixed(1);
         uvpOutput.textContent = uvp.toFixed(1);
         ocpOutput.textContent = ocp.toFixed(1);
 
-        // Update 3D Visualizer
-        render3DModel(series, parallel);
+        // Render Model
+        render3DModel(series, parallel, cellType, cellBaseW, cellBaseH, cellDepth, cellGap);
     }
 
-    function render3DModel(series, parallel) {
+    // Shadow generator for 3D depth effect (optimized)
+    function generateDepthShadow(color, visualDepthPx, maxLayers = 15) {
+        let shadow = [];
+        let layers = Math.min(Math.round(visualDepthPx), maxLayers); 
+        if (layers < 1) layers = 1;
+
+        for (let i = 1; i <= layers; i++) {
+            let offset = (visualDepthPx / layers) * i;
+            shadow.push(`-${offset}px ${offset}px 0 ${color}`);
+        }
+        // Base shadow
+        shadow.push(`-${visualDepthPx + 3}px ${visualDepthPx + 3}px 10px rgba(0,0,0,0.5)`);
+        return shadow.join(', ');
+    }
+
+    function render3DModel(series, parallel, type, baseW, baseH, depth, gapMm) {
         const totalCells = series * parallel;
-        
-        // Clear previous grid
         batteryVisualizer.innerHTML = '';
         vizWarning.style.display = 'none';
 
-        // Set safe rendering limits so the browser doesn't freeze
-        if (totalCells > 1200) {
+        // Limit render size to prevent browser crash
+        if (totalCells > 1500) {
             batteryVisualizer.style.display = 'none';
             vizWarning.style.display = 'block';
-            vizWarning.textContent = `Visualization paused: Pack size (${totalCells} cells) is too large to render smoothly in 3D.`;
+            vizWarning.textContent = `Visualization hidden: Pack size (${totalCells} cells) is too large to render smoothly in 3D.`;
             return;
         }
 
         batteryVisualizer.style.display = 'grid';
         
-        // Setup Grid Structure mapping to S and P
-        batteryVisualizer.style.gridTemplateColumns = `repeat(${parallel}, 16px)`;
-        batteryVisualizer.style.gridTemplateRows = `repeat(${series}, 16px)`;
+        // Calculate dynamic scaling so it always fits in the viewport container
+        const maxContainerViewPx = 450; 
+        const unscaledPackWidth = (parallel * baseW) + (parallel * gapMm);
+        const unscaledPackHeight = (series * baseH) + (series * gapMm);
+        const unscaledDepth = depth;
+        
+        // Rough isometric bounds calculation
+        const isoWidth = unscaledPackWidth + unscaledDepth;
+        const isoHeight = unscaledPackHeight + unscaledDepth;
+        const maxUnscaled = Math.max(isoWidth, isoHeight);
+        
+        let scaleFactor = maxContainerViewPx / maxUnscaled;
+        
+        // Cap scaling to prevent small packs from looking absurdly huge
+        if (scaleFactor > 3) scaleFactor = 3;
+        if (scaleFactor < 0.2) scaleFactor = 0.2; 
 
-        // Generate Cells
+        // Convert to Px
+        const pxW = baseW * scaleFactor;
+        const pxH = baseH * scaleFactor;
+        const pxDepth = depth * scaleFactor;
+        const pxGap = gapMm * scaleFactor;
+
+        batteryVisualizer.style.gap = `${pxGap}px`;
+        batteryVisualizer.style.gridTemplateColumns = `repeat(${parallel}, ${pxW}px)`;
+        batteryVisualizer.style.gridTemplateRows = `repeat(${series}, ${pxH}px)`;
+
+        // Determine colors based on type
+        const baseColor = type === 'cylindrical' ? '#3498db' : '#ecf0f1';
+        const shadowColor = type === 'cylindrical' ? '#2980b9' : '#bdc3c7';
+        
+        const generatedShadow = generateDepthShadow(shadowColor, pxDepth);
+
         for (let i = 0; i < totalCells; i++) {
             const cell = document.createElement('div');
-            cell.className = 'cell-3d';
+            cell.className = `cell-3d cell-${type}`;
+            cell.style.width = `${pxW}px`;
+            cell.style.height = `${pxH}px`;
+            cell.style.boxShadow = generatedShadow;
+            
+            // Allow override of background for prismatic to look more metallic
+            if(type === 'prismatic') cell.style.backgroundColor = baseColor;
+            
             batteryVisualizer.appendChild(cell);
         }
     }
 
-    // Add event listeners to all inputs to trigger recalculation on change
+    // Attach Listeners
     inputs.forEach(input => {
         input.addEventListener('input', calculatePack);
     });
 
-    // Initial calculation on load
+    // Run Initial Calc
     calculatePack();
 </script>
 
